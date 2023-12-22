@@ -17,9 +17,9 @@ BLACK = (0, 0, 0)
 pygame.display.set_caption("Pong")
 
 
-
 class Paddle:
     COLOR = WHITE
+    VELOCITY = 4
 
     def __init__(self, x, y, width, height):
         self.x = x
@@ -27,9 +27,14 @@ class Paddle:
         self.width = width
         self.height = height
 
-
     def draw(self, win):
         pygame.draw.rect(win, self.COLOR, (self.x, self.y, self.width, self.height))
+
+    def move(self, up=True):
+        if up:
+            self.y -= self.VELOCITY
+        else:
+            self.y += self.VELOCITY
 
 def draw(win, paddles):
     """
@@ -39,10 +44,25 @@ def draw(win, paddles):
     """
     win.fill(BLACK)
 
-    # TODO: draw paddles.
+    for paddle in paddles:
+        paddle.draw(win)
 
     # Pygame must be updated to display any changes.
     pygame.display.update()
+
+
+def handle_paddle_movement(keys, left_paddle, right_paddle):
+    # If w key is pressed, move up. If s key pressed, move down.
+    # Also ensure that paddles cannot move off the screen.
+    if keys[pygame.K_w] and left_paddle.y - left_paddle.VELOCITY >= 0:
+        left_paddle.move(up=True)
+    if keys[pygame.K_s] and left_paddle.y + left_paddle.VELOCITY <= HEIGHT - PADDLE_HEIGHT:
+        left_paddle.move(up=False)
+
+    if keys[pygame.K_UP] and right_paddle.y - right_paddle.VELOCITY >= 0:
+        right_paddle.move(up=True)
+    if keys[pygame.K_DOWN] and right_paddle.y + right_paddle.VELOCITY <= HEIGHT - PADDLE_HEIGHT:
+        right_paddle.move(up=False)
 
 
 def main():
@@ -52,8 +72,8 @@ def main():
     clock = pygame.time.Clock()
 
     # Create the two paddles.
-    left_paddle = Paddle(10, HEIGHT // 2 - PADDLE_HEIGHT//2, PADDLE_WIDTH, PADDLE_HEIGHT)
-    right_paddle = Paddle(PADDLE_WIDTH - 10, HEIGHT // 2 - PADDLE_HEIGHT//2, PADDLE_WIDTH, PADDLE_HEIGHT)
+    left_paddle = Paddle(10, HEIGHT // 2 - PADDLE_HEIGHT // 2, PADDLE_WIDTH, PADDLE_HEIGHT)
+    right_paddle = Paddle(WIDTH - 10 - PADDLE_WIDTH, HEIGHT // 2 - PADDLE_HEIGHT // 2, PADDLE_WIDTH, PADDLE_HEIGHT)
 
     # Main game loop.
     while run:
@@ -69,6 +89,11 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
                 break
+
+
+        # Handle paddle movement.
+        keys = pygame.key.get_pressed()
+        handle_paddle_movement(keys, left_paddle, right_paddle)
 
     pygame.quit()
 
