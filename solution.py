@@ -47,6 +47,15 @@ def draw(win, paddles):
     for paddle in paddles:
         paddle.draw(win)
 
+
+    # Draw dotted line down the middle. Implement as 20 rectangles on the screen but only select every other rectangle.
+    for i in range(10, HEIGHT, HEIGHT//20):
+        if i % 2 == 1:
+            continue
+        pygame.draw.rect(win, WHITE, (WIDTH//2-3, i, 6, HEIGHT//20 ))
+
+
+
     # Pygame must be updated to display any changes.
     pygame.display.update()
 
