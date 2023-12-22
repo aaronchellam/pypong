@@ -10,9 +10,12 @@ FPS = 60
 PADDLE_WIDTH, PADDLE_HEIGHT = 20, 100
 BALL_RADIUS = 7
 
-# Colours.
+WINNING_SCORE = 5
+
+# Colours and Aesthetics.
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+SCORE_FONT = pygame.font.SysFont("comicsans", 50)
 
 # Set the window caption.
 pygame.display.set_caption("Pong")
@@ -23,8 +26,8 @@ class Paddle:
     VELOCITY = 4
 
     def __init__(self, x, y, width, height):
-        self.x = x
-        self.y = y
+        self.x = self.original_x = x
+        self.y = self.original_y = y
         self.width = width
         self.height = height
 
@@ -38,13 +41,19 @@ class Paddle:
             self.y += self.VELOCITY
 
 
+    def reset(self):
+        self.x = self.original_x
+        self.y = self.original_y
+
+
+
 class Ball:
     MAX_VEL = 5
     COLOUR = WHITE
 
     def __init__(self, x, y, radius):
-        self.x = x
-        self.y = y
+        self.x = self.original_x = x
+        self.y = self.original_y = y
         self.radius = radius
         self.x_vel = self.MAX_VEL
         self.y_vel = 0
@@ -57,13 +66,27 @@ class Ball:
         self.y += self.y_vel
 
 
-def draw(win, paddles, ball):
+    def reset(self):
+        self.x = self.original_x
+        self.y = self.original_y
+
+        self.y_vel = 0
+        self.x_vel *= -1
+
+
+def draw(win, paddles, ball, left_score, right_score):
     """
 
     :param win: Game window.
     :param paddles: Game paddles.
     """
     win.fill(BLACK)
+
+    # Draw scores. The second argment of 1 is for the anialias param.
+    left_score_text = SCORE_FONT.render(f"{left_score}", 1,WHITE)
+    right_score_text = SCORE_FONT.render(f"{right_score}", 1, WHITE)
+    win.blit(left_score_text, (WIDTH//4 - left_score_text.get_width()//2, 10))
+    win.blit(right_score_text, ((WIDTH*3)//4  - right_score_text.get_width()//2, 10))
 
     for paddle in paddles:
         paddle.draw(win)
@@ -152,6 +175,10 @@ def main():
     right_paddle = Paddle(WIDTH - 10 - PADDLE_WIDTH, HEIGHT // 2 - PADDLE_HEIGHT // 2, PADDLE_WIDTH, PADDLE_HEIGHT)
     ball = Ball(WIDTH // 2, HEIGHT // 2, BALL_RADIUS)
 
+    # Create scores for each player.
+    left_score = 0
+    right_score = 0
+
     # Main game loop.
     while run:
         # Prevent the game from running more frames per second than the FPS value. In this case, 60 FPS.
@@ -159,7 +186,7 @@ def main():
         clock.tick(FPS)
 
         # Draw on the game window.
-        draw(WIN, [left_paddle, right_paddle], ball)
+        draw(WIN, [left_paddle, right_paddle], ball, left_score, right_score)
 
         # Retrieve all events; e.g., clicking mouse/keyboard, closing window...
         for event in pygame.event.get():
@@ -174,6 +201,38 @@ def main():
         # Ball movement.
         ball.move()
         handle_collision(ball, left_paddle, right_paddle)
+
+        # Handle scoring.
+        if ball.x < 0:
+            right_score += 1
+            ball.reset()
+        elif ball.x > WIDTH:
+            left_score += 1
+            ball.reset()
+
+
+        won = False
+        if left_score >= WINNING_SCORE:
+            won = True
+            win_text = "Left Player Won!"
+        elif right_score >= WINNING_SCORE:
+            won = True
+            win_text = "Right Player Won!"
+
+
+        if won:
+            text = SCORE_FONT.render(win_text, 1, WHITE)
+            WIN.blit(text, (WIDTH//2 - text.get_width()//2, HEIGHT//2 - text.get_height()//2))
+            pygame.display.update()
+
+            # 5000ms == 5s
+            pygame.time.delay(5000)
+            ball.reset()
+            left_paddle.reset()
+            right_paddle.reset()
+            left_score = 0
+            right_score = 0
+
     pygame.quit()
 
 
